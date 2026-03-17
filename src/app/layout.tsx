@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Montserrat, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
+import CustomLayout from "@/layout";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -22,10 +24,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body
-        className={`${montserrat.variable} antialiased`}
-      >
-        {children}
+      <body className={`${montserrat.variable} antialiased`}>
+        <Toaster position="top-center" />
+        <CustomLayout>{children}</CustomLayout>
       </body>
     </html>
   );
