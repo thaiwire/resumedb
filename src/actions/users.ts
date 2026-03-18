@@ -28,6 +28,16 @@ type LogoutActionResult =
       error: string;
     };
 
+type UpdatePersonalInfoResult =
+  | {
+      success: true;
+      message: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
 export const registerUser = async (payload : Partial<IUser>) => {
     try {
       const supabase = await createSupabaseServerClient();
@@ -136,7 +146,7 @@ export const getLoggedInUser = async () => {
     }
     const { data: profileData, error: profileError } = await supabase
       .from("user_profile")
-      .select("id, email, name, role")
+      .select("id, email, name, role, resume_data")
       .eq("email", user.email!)
       .single();
 
@@ -173,6 +183,62 @@ export const logoutUser = async (): Promise<LogoutActionResult> => {
     return {
       success: true,
       message: "Logout successful!",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: (error as Error).message,
+    };
+  }
+};
+
+export const updatePersonalInfo = async (
+  payload: NonNullable<IUser["resume_data"]>["personal_info"]
+): Promise<UpdatePersonalInfoResult> => {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError) {
+      throw new Error(authError.message);
+    }
+
+    if (!user?.email) {
+      throw new Error("Please log in to update personal information.");
+    }
+
+    const { data: currentProfile, error: currentProfileError } = await supabase
+      .from("user_profile")
+      .select("resume_data")
+      .eq("email", user.email)
+      .single();
+
+    if (currentProfileError) {
+      throw new Error(currentProfileError.message);
+    }
+
+    const nextResumeData = {
+      ...(currentProfile?.resume_data ?? {}),
+      personal_info: payload,
+    };
+
+    const { error: updateError } = await supabase
+      .from("user_profile")
+      .update({ resume_data: nextResumeData })
+      .eq("email", user.email);
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+
+    revalidatePath("/user/resume-data");
+
+    return {
+      success: true,
+      message: "Personal information updated successfully!",
     };
   } catch (error) {
     return {

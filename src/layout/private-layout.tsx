@@ -34,13 +34,13 @@ function PrivatLayout({ children }: { children: React.ReactNode }) {
       const isAdminRoute = pathname.startsWith("/admin");
 
       if (isAdminRoute && role !== "admin") {
-        setUser(result.data);
+        setUser(result.data ?? null);
         setUserLoading(false);
         router.replace("/user/template");
         return;
       }
 
-      setUser(result.data);
+      setUser(result.data ?? null);
       setUserLoading(false);
     };
 
